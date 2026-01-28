@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Danh sách Sản phẩm</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #7380be 0%, #868df0 100%);
+            padding: 10px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 15px;
+            font-size: 1.8em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .loading {
+            text-align: center;
+            color: white;
+            font-size: 1.5em;
+            padding: 50px;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 15px;
+            padding: 10px 0;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            cursor: pointer;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            background: #f0f0f0;
+        }
+
+        .product-info {
+            padding: 12px;
+        }
+
+        .product-id {
+            display: inline-block;
+            background: #f0f0f0;
+            color: #666;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7em;
+            margin-bottom: 6px;
+            font-weight: bold;
+        }
+
+        .product-title {
+            font-size: 1em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+            min-height: 40px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .product-slug {
+            font-size: 0.75em;
+            color: #999;
+            font-style: italic;
+            margin-bottom: 6px;
+        }
+
+        .product-price {
+            font-size: 1.3em;
+            color: #667eea;
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+
+        .product-description {
+            color: #666;
+            font-size: 0.8em;
+            line-height: 1.3;
+            margin-bottom: 8px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .product-category {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            margin-top: 5px;
+        }
+
+        .error {
+            background: #ff6b6b;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .stats {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 0.95em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛍️ Danh sách Sản phẩm</h1>
+        <div id="stats" class="stats"></div>
+        <div id="loading" class="loading">Đang tải dữ liệu...</div>
+        <div id="error" class="error" style="display: none;"></div>
+        <div id="products" class="products-grid"></div>
+    </div>
+
+    <script>
+        // API URL
+        const API_URL = 'https://api.escuelajs.co/api/v1/products';
+
+        // Fetch và hiển thị dữ liệu
+        async function fetchAndDisplayProducts() {
+            const loadingDiv = document.getElementById('loading');
+            const errorDiv = document.getElementById('error');
+            const productsDiv = document.getElementById('products');
+            const statsDiv = document.getElementById('stats');
+
+            try {
+                // Fetch data từ API
+                const response = await fetch(API_URL);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                // Convert response sang JSON (object)
+                const products = await response.json();
+
+                // Ẩn loading
+                loadingDiv.style.display = 'none';
+
+                // Hiển thị thống kê
+                statsDiv.innerHTML = `📦 Tổng số sản phẩm: <strong>${products.length}</strong>`;
+
+                // Hiển thị từng sản phẩm
+                productsDiv.innerHTML = products.map(product => {
+                    // Lấy ảnh đầu tiên, nếu không có thì dùng placeholder
+                    const imageUrl = product.images && product.images[0] 
+                        ? product.images[0].replace(/[\[\]"]/g, '') 
+                        : 'https://via.placeholder.com/250';
+
+                    return `
+                        <div class="product-card">
+                            <img src="${imageUrl}" 
+                                 alt="${product.title}" 
+                                 class="product-image"
+                                 onerror="this.src='https://via.placeholder.com/250'">
+                            <div class="product-info">
+                                <div class="product-id">ID: ${product.id}</div>
+                                <h3 class="product-title">${product.title}</h3>
+                                <div class="product-slug">🔗 ${product.slug || 'N/A'}</div>
+                                <div class="product-price">$${product.price}</div>
+                                <p class="product-description">${product.description}</p>
+                                <span class="product-category">📂 ${product.category?.name || 'Uncategorized'}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                // Log data ra console để xem object
+                console.log('Products data:', products);
+
+            } catch (error) {
+                loadingDiv.style.display = 'none';
+                errorDiv.style.display = 'block';
+                errorDiv.innerHTML = `❌ Lỗi khi tải dữ liệu: ${error.message}`;
+                console.error('Error fetching products:', error);
+            }
+        }
+
+        // Gọi hàm khi trang load xong
+        fetchAndDisplayProducts();
+    </script>
+</body>
+</html>
